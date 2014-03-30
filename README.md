@@ -22,25 +22,49 @@ Otherwise, it's very simple:
 
 1) Setup your own class that extends this (repo's) class.
 <pre><code>
-class Class_My_Tax_CMB extends Class_WP_ezClasses_Taxonomies_Custom_Meta_Boxes {
+if ( ! class_exists('Class_WP_My_Example_TCMB') ){
+	class Class_WP_My_Example_TCMB extends Class_WP_ezClasses_Taxonomies_Custom_Meta_Boxes {
+	
+		public function ezc_init($arr_args = array()){ 
 
+			$arr_args = WP_ezMethods::array_merge_ez( array($this->tcmb(), $arr_args) );
+			$this->taxonomy_custom_meta_boxes($arr_args);
+			
+		}
+		
+		/**
+		 * Define the args for a given taxonomy here
+		 */
+		protected function tcmb(){
+		
+			return array(
+						'taxonomy'			=> 'responsive', 
+						'meta_box_title'	=> 'Responsive',
+						'view'				=> 'select'									
+					);
+		}
+	}
 }
 </code></pre>
 
 (Note: If you want to skip the Getting Start be prepared to pull errors from unmet dependencies.)
 
 
-2) Define your args.
+2) On top of that, if you want you can also passed in args when you get an instance.
 <pre><code>
 $arr_my_args = array(
-
-					// see method taxonomy_custom_meta_boxes_defaults() for a list of all defaults you can change here. 
+					'view'				=> 'radio'	
 				);
 </code></pre>
 
-3) When you get your instance, pass in your args. 
+3) When you get your instance do this:
 <pre><code>
-$obj_my_tax_cmd = Class_WP_ezClasses_Taxonomies_Custom_Meta_Boxes::ezc_get_instance($arr_my_args);
+$obj_my_tax_cmd = Class_WP_My_Example_TCMB::ezc_get_instance();
+</code></pre>
+
+Or if you have args to pass in:
+<pre><code>
+$obj_my_tax_cmd = Class_WP_My_Example_TCMB::ezc_get_instance($arr_my_args);
 </code></pre>
 
 

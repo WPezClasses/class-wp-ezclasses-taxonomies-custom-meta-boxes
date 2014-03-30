@@ -1,8 +1,10 @@
 <?php
 /** 
- * TODO - 
+ * Remove a default WordPress taxonomy meta box and then add your own meta box using different form elements (e.g., radio buttons or select) to make the selection.
  *
- * TODO https://github.com/WebDevStudios/WDS_Taxonomy_Radio/blob/master/WDS_Taxonomy_Radio.class.php
+ * Automates the removal of the default WordPress taxonomy meta box (for the specified taxonomy) and then add your own meta box using different form elements (e.g., radio buttons or select) to make the selection.
+ *
+ * Inspired by: https://github.com/WebDevStudios/WDS_Taxonomy_Radio/blob/master/WDS_Taxonomy_Radio.class.php
  *
  * PHP version 5.3
  *
@@ -56,7 +58,10 @@ if ( ! class_exists('Class_WP_ezClasses_Taxonomies_Custom_Meta_Boxes') ){
 			 */
 			protected $_arr_post_types_exclude;
 
-			// Taxonomy object
+			
+			/**
+			 * Taxonomy object - TODO this doesn't have to be a property.
+			 */
 			protected $_obj_taxonomy;
 			
 
@@ -117,8 +122,17 @@ if ( ! class_exists('Class_WP_ezClasses_Taxonomies_Custom_Meta_Boxes') ){
 			protected $_str_help_error;
 			
 			
+			/**
+			 * No Selection - Add a "none of the below" option to the list. 
+			 * @var bool
+			 * @since 0.5.0	
+			 */
+			protected $_bool_no_selection;
+			
+			protected $_int_no_selection_value;
+			
 			// Set to true to hide "None" option & force a term selection
-			protected $_bool_force_selection;
+			protected $_str_no_selection_label;
 			
 			/**
 			 * Default Taxonomy ID - The default (id) value for a give taxonomy. Especially helpful in enforcing a "required" value.  Default: -1 (i.e., no default tax id)
@@ -149,7 +163,7 @@ if ( ! class_exists('Class_WP_ezClasses_Taxonomies_Custom_Meta_Boxes') ){
 		/**
 		 *
 		 */
-		public function __construct(){
+		protected function __construct(){
 			parent::__construct();
 		}	
 
@@ -196,7 +210,9 @@ if ( ! class_exists('Class_WP_ezClasses_Taxonomies_Custom_Meta_Boxes') ){
 			$this->_str_help_class = $arr_args['help_class'];
 			$this->_str_error = $arr_args['error'];
 			$this->_str_error_class = $arr_args['error_class'];
-			$this->_bool_force_selection = $arr_args['force_selection'];
+			$this->_bool_no_selection = $arr_args['no_selection'];
+			$this->_int_no_selection_value = $arr_args['no_selection_value'];
+			$this->_str_no_selection_label = $arr_args['no_selection_label'];
 			$this->_str_default_tax_id = $arr_args['default_tax_id'];
 
 
@@ -352,7 +368,7 @@ if ( ! class_exists('Class_WP_ezClasses_Taxonomies_Custom_Meta_Boxes') ){
 			 // default value
 			$mix_default_val = '';
 			if ( $bool_hierarchical == true ) {
-				$mix_default_val = 0;
+				$mix_default_val = 1;
 			}
 			 // input name
 			$str_name = 'tax_input[' . $this->_str_taxonomy . ']';
@@ -366,17 +382,18 @@ if ( ! class_exists('Class_WP_ezClasses_Taxonomies_Custom_Meta_Boxes') ){
 			 $str_to_return_open = '<div style="margin-bottom: 5px;">';
 			 $str_to_return_open .= '<ul id="'. $this->_str_taxonomy .'_taxradiolist" data-wp-lists="list:'. $this->_str_taxonomy .'_tax" class="categorychecklist form-no-clear">';
 
-				// If 'category' force a selection, or _bool_force_selection is true
-				/*
-				if ( $this->_str_taxonomy == 'category' || $this->_bool_force_selection === true ) {  
-					
-					 $str_to_return .= '<li id="'. $this->_str_taxonomy .'_tax-0"><label><input value="'. $mix_default_val .'" type="radio" name="'. $str_name .'" id="in-'. $this->_str_taxonomy .'_tax-0" ';
-					 if ( empty( $arr_existing ) ){
-						$str_to_return .=  ' checked="checked" ';
-					 }
-					 $str_to_return .=  '> '. sprintf( __( 'No %s', 'wds' ), $this->taxonomy_get_taxonomy()->labels->singular_name ) .'</label></li>';
-				}
-				*/
+			// If 'category' then we need at least one select, or _bool_no_selection is true
+			
+			if ( $this->_bool_no_selection === true ){  
+				
+				 $str_to_return .= '<li id="'. $this->_str_taxonomy .'_tax-0">';
+				 $str_to_return .= '<label><input value="'. $this->_int_no_selection_value .'" type="radio" name="'. $str_name .'" id="in-'. $this->_str_taxonomy .'_tax-0" ';
+				 if ( empty( $arr_existing ) ){
+					$str_to_return .=  ' checked="checked" ';
+				 }
+				 $str_to_return .=  '> '. $this->_str_no_selection_label . ' ' . $this->taxonomy_get_taxonomy()->labels->singular_name . '</label></li>';
+			}
+				
 
 			 // loop our terms and check if they're associated with this post
 			 $int_cnt = 0;
@@ -476,20 +493,19 @@ if ( ! class_exists('Class_WP_ezClasses_Taxonomies_Custom_Meta_Boxes') ){
 				$str_name ='tax_input[' . $this->_str_taxonomy . '][]';
 			}
 			
-			 $str_to_return = '';
+			$str_to_return = '';
+			$str_to_return_open = '<div style="margin-bottom: 5px;">';
 
-			 $str_to_return_open = '<div style="margin-bottom: 5px;">';
-	//		 $str_to_return_open .= '<select id="'. $this->_str_taxonomy .'_taxradiolist" name="'. $str_name .'" id="in-'. $this->_str_taxonomy .'_tax-'. $obj_term->term_id .'" '. ' data-wp-lists="list:'. $this->_str_taxonomy .'_tax" class="categorychecklist form-no-clear">'; // <<< 5px = property
-
-				// If 'category' force a selection, or _bool_force_selection is true
-				/*
-				if ( $this->_str_taxonomy == 'category' || $this->_bool_force_selection == true ) {   
-					 // 
-					 $str_to_return .= '<option value="'. $mix_default_val . '" ';
-					 $str_to_return .=  checked( empty( $arr_existing ), true, false );
-					 $str_to_return .=  '>'. sprintf( __( 'No %s', 'wds' ), $this->taxonomy_get_taxonomy()->labels->singular_name ) .'</option>';
-				}
-				*/
+			// If 'category' force a selection, or _bool_no_selection is true
+			if ( $this->_bool_no_selection === true ) {   
+				 // 
+				 $str_to_return .= '<option value="'. $this->_int_no_selection_value . '" ';
+				 if ( empty( $arr_existing ) ){
+					$str_to_return .=  checked( empty( $arr_existing ), true, false );
+				 }
+				 $str_to_return .=  '> '. $this->_str_no_selection_label . ' ' . $this->taxonomy_get_taxonomy()->labels->singular_name  . '</option>';
+			}
+				
 
 			 // loop our terms and check if they're associated with this post
 			$term_id = '';
@@ -593,8 +609,10 @@ if ( ! class_exists('Class_WP_ezClasses_Taxonomies_Custom_Meta_Boxes') ){
 								'help_class'							=> 'howto',
 								'error'									=> 'Oops - Please be sure to Save.',
 								'error_class'							=> 'howto',
-								'force_selection'						=> false,													// bool
-								'default_tax_id'						=> -1,													// else, integer of the tax_id you want as the default
+								'no_selection'							=> false,													// bool
+								'no_selection_value'					=> 1,
+								'no_selection_label'					=> 'No',
+								'default_tax_id'						=> -1,														// else, integer of the tax_id you want as the default
 								'get_terms_defaults'					=> $this->taxonomy_custom_meta_boxes_get_terms_defaults(),
 								'get_post_types_defaults' 				=> $arr_taxonomy_custom_meta_boxes_get_post_types_defaults,
 								'get_post_types_defaults_args'			=> $arr_taxonomy_custom_meta_boxes_get_post_types_defaults['args'],
