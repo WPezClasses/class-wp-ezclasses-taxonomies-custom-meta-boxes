@@ -55,8 +55,8 @@ if (!class_exists('Class_WP_ezClasses_Taxonomies_Custom_Meta_Boxes')) {
         $arr_init_defaults,
         $arr_tax_cmb_todo
       ));
+	  
 
-	 
       if (isset($this->_arr_init['arr_arg_validation']) && ! is_bool($this->_arr_init['arr_arg_validation'])) {
         $this->_arr_init['arr_arg_validation'] = $arr_init_defaults['arr_arg_validation'];
       }
@@ -97,20 +97,7 @@ if (!class_exists('Class_WP_ezClasses_Taxonomies_Custom_Meta_Boxes')) {
       );
 	  
       return $arr_taxonomy_cmb_todo;
-    }
-
-    /**
-     * currently NA (but it's here just in case)
-     */
-    protected function setup() {
-      $this->_version = '0.5.0';
-      $this->_url = plugin_dir_url(__FILE__);
-      $this->_path = plugin_dir_path(__FILE__);
-      $this->_path_parent = dirname($this->_path);
-      $this->_basename = plugin_basename(__FILE__);
-      $this->_file = __FILE__;
-    }
-	
+    }	
 
     /**
      * Roll all the other default pieces into one
@@ -125,6 +112,7 @@ if (!class_exists('Class_WP_ezClasses_Taxonomies_Custom_Meta_Boxes')) {
           $this->taxonomy_cmb_get_terms_defaults() ,
           )
 	    );
+
       return $arr_init_defaults;
     }
 
@@ -168,6 +156,7 @@ if (!class_exists('Class_WP_ezClasses_Taxonomies_Custom_Meta_Boxes')) {
         'no_selection_value' 		=> 0,
         'no_selection_label' 		=> 'No',
         'default_tax_id' 			=> -1, 				// else, integer of the tax_id you want as the default
+		'default_tax_slug'			=> false,			// anything other than false will use to look up by slug (and if found) in order to calculate / override the default_tax_id. if not found by slug default_tax_id will remain unchanged. 
 
         //*	'get_terms_defaults'					=> $this->taxonomy_cmb_get_terms_defaults(),
       );
@@ -254,6 +243,20 @@ if (!class_exists('Class_WP_ezClasses_Taxonomies_Custom_Meta_Boxes')) {
      */
     public function taxonomy_add_meta_box_swap(){
       $arr_init = $this->_arr_init;
+	  
+
+	  if ( isset($this->_arr_init['default_tax_slug']) && $this->_arr_init['default_tax_slug'] !== false ){
+		
+		$arr_terms = get_terms( $this->_arr_init['taxonomy'], array('hide_empty' => false));
+		foreach ($arr_terms as $obj_term){
+		
+		   if ( $obj_term->slug == $this->_arr_init['default_tax_slug'] ){
+		     $this->_arr_init['default_tax_id'] = $obj_term->term_id;
+			// die ( $obj_term->term_id);
+			 break;
+		   }
+		}
+ 	  }	  
 
       $arr_post_types_minus_exclude = array_diff($arr_init['post_types'], $arr_init['post_types_exclude']);
 
